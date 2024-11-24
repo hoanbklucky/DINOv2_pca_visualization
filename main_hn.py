@@ -34,7 +34,7 @@ def main(save_fg_mask=False, img_size=224, output_folder="outputs"):
     end_idx = 4
     img_cnt = end_idx-start_idx+1
 
-    images = [transform(Image.open(f"images/{i}.jpg")) for i in range(start_idx, end_idx+1)]
+    images = [transform(Image.open(f"noh_thyroid_images_2/{i}.jpg")) for i in range(start_idx, end_idx+1)]
     images = np.stack(images) #join list of array into 1 array along new axis
     images = torch.FloatTensor(images).cuda()
     images_plot = ((images.cpu().numpy()*0.5+0.5)*255).transpose(0, 2, 3, 1).astype(np.uint8)
@@ -58,7 +58,7 @@ def main(save_fg_mask=False, img_size=224, output_folder="outputs"):
     for i in range(img_cnt):
         image_patches = fg_pca_images[i,:] #image_patches.shape = (1024,)
         # mask = (image_patches < 0.4).ravel()
-        mask = (image_patches > 0.6).ravel()
+        mask = (image_patches < 0.6).ravel()
         masks.append(mask)
 
     if save_fg_mask:
@@ -76,7 +76,7 @@ def main(save_fg_mask=False, img_size=224, output_folder="outputs"):
         plt.savefig(osp.join(output_folder, "fg_mask.jpg"))
         plt.close()
 
-    pca = PCA(n_components=3)
+    pca = PCA(n_components=1)
     fg_patches = np.vstack([x_norm_patchtokens[i,masks[i],:] for i in range(img_cnt)])
     # vstack stack the sequence of input arrays vertically to make a single array.
     # x_norm_patchtokens.shape = (4, 1024, 384), fg_patches.shape = (1630, 384)
@@ -95,10 +95,10 @@ def main(save_fg_mask=False, img_size=224, output_folder="outputs"):
 
         plt.subplot(img_cnt, 2, 2*i+2)
         plt.axis("off")
-        pca_results = np.zeros((patch_h*patch_w, 3), dtype='float32')
+        pca_results = np.zeros((patch_h*patch_w, 1), dtype='float32')
         #pca_results.shape = (1024, 3)
         pca_results[masks[i]] = fg_result[mask_indices[i]:mask_indices[i+1]]
-        pca_results = pca_results.reshape(patch_h, patch_w, 3)
+        pca_results = pca_results.reshape(patch_h, patch_w, 1)
         #pca_results.shape = (32, 32, 3)
         plt.imshow(pca_results)
     plt.savefig(osp.join(output_folder, "results.jpg"))
@@ -131,5 +131,5 @@ def main(save_fg_mask=False, img_size=224, output_folder="outputs"):
 if __name__ == "__main__":
     save_fg_mask = True
     img_size = 448
-    output_folder = "outputs"
+    output_folder = "noh_thyroid_images_2_outputs"
     main(save_fg_mask, img_size, output_folder)
