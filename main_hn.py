@@ -11,7 +11,7 @@ from sklearn.preprocessing import minmax_scale
 import torch
 import torchvision.transforms as T
 
-def main(save_fg_mask=False, img_size=224, output_folder="outputs"):
+def main(save_fg_mask=False, img_size=224, input_folder="images", num_PCA =3, output_folder="outputs"):
     os.makedirs(output_folder, exist_ok=True)
 
     assert img_size % 14 == 0, "The image size must be exactly divisible by 14"
@@ -34,7 +34,7 @@ def main(save_fg_mask=False, img_size=224, output_folder="outputs"):
     end_idx = 4
     img_cnt = end_idx-start_idx+1
 
-    images = [transform(Image.open(f"noh_thyroid_images_2/{i}.jpg")) for i in range(start_idx, end_idx+1)]
+    images = [transform(Image.open(f"{input_folder}/{i}.jpg")) for i in range(start_idx, end_idx+1)]
     images = np.stack(images) #join list of array into 1 array along new axis
     images = torch.FloatTensor(images).cuda()
     images_plot = ((images.cpu().numpy()*0.5+0.5)*255).transpose(0, 2, 3, 1).astype(np.uint8)
@@ -76,7 +76,7 @@ def main(save_fg_mask=False, img_size=224, output_folder="outputs"):
         plt.savefig(osp.join(output_folder, "fg_mask.jpg"))
         plt.close()
 
-    pca = PCA(n_components=1)
+    pca = PCA(n_components=num_PCA)
     fg_patches = np.vstack([x_norm_patchtokens[i,masks[i],:] for i in range(img_cnt)])
     # vstack stack the sequence of input arrays vertically to make a single array.
     # x_norm_patchtokens.shape = (4, 1024, 384), fg_patches.shape = (1630, 384)
@@ -95,10 +95,10 @@ def main(save_fg_mask=False, img_size=224, output_folder="outputs"):
 
         plt.subplot(img_cnt, 2, 2*i+2)
         plt.axis("off")
-        pca_results = np.zeros((patch_h*patch_w, 1), dtype='float32')
+        pca_results = np.zeros((patch_h*patch_w, num_PCA), dtype='float32')
         #pca_results.shape = (1024, 3)
         pca_results[masks[i]] = fg_result[mask_indices[i]:mask_indices[i+1]]
-        pca_results = pca_results.reshape(patch_h, patch_w, 1)
+        pca_results = pca_results.reshape(patch_h, patch_w, num_PCA)
         #pca_results.shape = (32, 32, 3)
         plt.imshow(pca_results)
     plt.savefig(osp.join(output_folder, "results.jpg"))
@@ -131,5 +131,9 @@ def main(save_fg_mask=False, img_size=224, output_folder="outputs"):
 if __name__ == "__main__":
     save_fg_mask = True
     img_size = 448
-    output_folder = "noh_thyroid_images_2_outputs"
-    main(save_fg_mask, img_size, output_folder)
+    input_folder = "noh_thyroid_images"
+    num_PCA = 3
+    output_folder = f"{input_folder}_outputs_{num_PCA}PCA"
+    if not os.path.isdir(output_folder):
+        os.makedirs(output_folder)
+    main(save_fg_mask, img_size, input_folder, num_PCA, output_folder)
