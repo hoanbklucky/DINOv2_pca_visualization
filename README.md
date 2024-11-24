@@ -12,3 +12,9 @@ The Figure 1 of DINOv2 [paper](https://arxiv.org/pdf/2304.07193.pdf).
 The results of Figure 1 are reproduced below.
 ### Dog
 ![image](assets/results.jpg)
+### NOH data 
+From top to bottom: #25 cancer, #70 cancer, #81 benign, #92 cancer
+![image](noh_thyroid_images_outputs/results.jpg)
+### NOH data 2
+From top to bottom: #10 cancer, #22 benign, #35 benign, #48 cancer
+![image](noh_thyroid_images_2_outputs/results.jpg)
